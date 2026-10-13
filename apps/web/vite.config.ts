@@ -5,7 +5,7 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   server: {
     port: 3001,
   },
@@ -15,12 +15,14 @@ export default defineConfig({
   plugins: [
     varlockVitePlugin({ ssrInjectMode: "resolved-env" }),
     tailwindcss(),
-    tanstackStart(),
+    // Every page is static: render them all to HTML at build time.
+    tanstackStart({ prerender: { crawlLinks: true, enabled: true } }),
     nitro(),
     viteReact(),
   ],
-  // Bundle all SSR deps: Vercel functions have no node_modules at runtime
+  // Bundle all SSR deps for the build: Vercel functions have no node_modules at runtime.
+  // Not in dev, where inlining makes Vite evaluate CommonJS React as ESM ("module is not defined").
   ssr: {
-    noExternal: true,
+    noExternal: command === "build" ? true : undefined,
   },
-});
+}));

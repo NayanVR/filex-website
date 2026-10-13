@@ -5,6 +5,7 @@
   "scripts": {
     "build": "vite build",
     "serve": "vite preview",
+    "test": "bun test src",
     "dev": "vite dev",
     "check-types": "vite build && tsc --noEmit",
     "env:generate": "varlock codegen"
