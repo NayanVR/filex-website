@@ -121,7 +121,7 @@ export const InstallSection = () => {
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <article id="windows" className="card flex flex-col gap-4 p-7">
+      <article id="windows" className="card flex min-w-0 flex-col gap-4 p-7">
         <h3 className="text-lg font-semibold">
           Windows <span className="text-muted text-sm font-normal">x64</span>
         </h3>
@@ -139,7 +139,7 @@ export const InstallSection = () => {
         </Prompt>
       </article>
 
-      <article id="macos" className="card flex flex-col gap-4 p-7">
+      <article id="macos" className="card flex min-w-0 flex-col gap-4 p-7">
         <h3 className="text-lg font-semibold">
           macOS{" "}
           <span className="text-muted text-sm font-normal">Apple Silicon</span>
@@ -158,7 +158,7 @@ export const InstallSection = () => {
         </Prompt>
       </article>
 
-      <article id="linux" className="card flex flex-col gap-4 p-7">
+      <article id="linux" className="card flex min-w-0 flex-col gap-4 p-7">
         <h3 className="text-lg font-semibold">
           Linux <span className="text-muted text-sm font-normal">x86_64</span>
         </h3>
