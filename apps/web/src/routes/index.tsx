@@ -9,10 +9,12 @@ import {
   Palette,
   ShieldCheck,
   Sparkles,
+  Star,
   Tag,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AppWindow } from "@/components/app-window";
@@ -47,7 +49,7 @@ const AnimatedLogo = ({ className = "w-16" }: { className?: string }) => (
 );
 
 const Eyebrow = ({ children }: { children: ReactNode }) => (
-  <p className="text-accent mb-3 text-sm font-semibold tracking-wide">
+  <p className="text-muted mb-4 font-mono text-xs tracking-[0.2em] uppercase">
     {children}
   </p>
 );
@@ -68,13 +70,13 @@ const Section = ({
   <section
     id={id}
     aria-labelledby={`${id}-title`}
-    className="mx-auto max-w-6xl scroll-mt-20 px-6 py-20 sm:py-24"
+    className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24 sm:py-36"
   >
     <div className="mb-14 max-w-2xl">
       <Eyebrow>{eyebrow}</Eyebrow>
       <h2
         id={`${id}-title`}
-        className="text-gradient text-4xl font-semibold tracking-tight text-balance sm:text-5xl"
+        className="text-gradient text-4xl font-semibold tracking-[-0.035em] text-balance sm:text-6xl"
       >
         {title}
       </h2>
@@ -93,7 +95,7 @@ const ReleasePill = () => {
       to="/download"
       className="rise group border-line text-muted hover:text-text inline-flex items-center gap-2 rounded-full border bg-white/[0.03] py-1 pr-3 pl-1 text-sm backdrop-blur transition"
     >
-      <span className="bg-accent/15 text-accent rounded-full px-2 py-0.5 text-xs font-semibold">
+      <span className="text-text rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold">
         {version ? `v${version}` : "New"}
       </span>
       Now on Windows, macOS and Linux
@@ -106,83 +108,101 @@ const ReleasePill = () => {
   );
 };
 
-const STATS = [
-  { label: "to find a file among 200,000", value: "<2 ms" },
-  { label: "No ads, no account, no fees", value: "Free" },
-  { label: "Your files never leave your computer", value: "Private" },
-  { label: "Windows, macOS and Linux", value: "3 systems" },
-] as const;
+// Share of the viewport height scrolled before the window stands fully upright.
+const TILT_DISTANCE = 0.5;
 
-const Hero = () => (
-  <section className="relative overflow-hidden">
-    <div className="bg-grid pointer-events-none absolute inset-0" />
-    <div
-      className="pointer-events-none absolute top-[-20%] left-1/2 h-[700px] w-[1100px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(90_200_250/0.18),transparent)]"
-      aria-hidden="true"
-    />
-    <div className="relative mx-auto flex max-w-6xl flex-col items-center px-6 pt-20 text-center sm:pt-28">
-      <ReleasePill />
-      <h1
-        className="rise text-gradient mt-8 max-w-4xl text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-7xl"
-        style={{ animationDelay: "80ms" }}
-      >
-        The file explorer that{" "}
-        <span className="text-gradient-accent">keeps up</span>.
-      </h1>
-      <p
-        className="rise text-muted mt-6 max-w-2xl text-lg leading-8 text-pretty sm:text-xl"
-        style={{ animationDelay: "160ms" }}
-      >
-        A fast file explorer for Windows, macOS and Linux. Big folders open
-        instantly, and you can find any file on your computer just by typing
-        part of its name.
-      </p>
-      <div className="rise mt-10" style={{ animationDelay: "240ms" }}>
-        <DownloadButton
-          secondary={
-            <a href={REPO_URL} className={secondaryButtonClass}>
-              Star on GitHub
-            </a>
-          }
-        />
-      </div>
+/** Writes page-scroll progress (0 → 1) to --tilt. Stays flat under reduced motion. */
+const useTiltOnScroll = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const progress = window.scrollY / (window.innerHeight * TILT_DISTANCE);
+      el.style.setProperty("--tilt", String(Math.min(progress, 1)));
+    };
+    const schedule = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  return ref;
+};
 
+const Hero = () => {
+  const tiltRef = useTiltOnScroll();
+  return (
+    <section className="relative overflow-hidden">
       <div
-        className="rise relative mt-20 w-full"
-        style={{ animationDelay: "360ms" }}
-      >
-        <div
-          className="bg-accent/25 pointer-events-none absolute inset-x-[10%] top-10 bottom-0 rounded-full blur-[100px]"
-          aria-hidden="true"
-        />
-        <AppWindow className="mx-auto max-w-5xl" />
-        <div
-          className="from-bg pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t to-transparent"
-          aria-hidden="true"
-        />
-      </div>
-    </div>
-
-    <dl className="border-line relative mx-auto grid max-w-6xl grid-cols-2 border-y px-6 lg:grid-cols-4">
-      {STATS.map(({ value, label }) => (
-        <div
-          key={label}
-          className="border-line flex flex-col gap-1 py-8 pr-6 lg:border-l lg:pl-8 lg:first:border-l-0 lg:first:pl-0"
+        className="pointer-events-none absolute top-[-30%] left-1/2 h-[700px] w-[1100px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.07),transparent)]"
+        aria-hidden="true"
+      />
+      <div className="relative mx-auto flex max-w-6xl flex-col items-center px-6 pt-20 text-center sm:pt-24">
+        <ReleasePill />
+        <h1
+          className="rise text-gradient mt-8 max-w-4xl text-5xl leading-[1] font-semibold tracking-[-0.045em] text-balance sm:text-8xl"
+          style={{ animationDelay: "80ms" }}
         >
-          <dt className="text-muted text-sm text-pretty">{label}</dt>
-          <dd className="text-gradient order-first text-3xl font-semibold tracking-tight">
-            {value}
-          </dd>
+          The file explorer that keeps up.
+        </h1>
+        <p
+          className="rise text-muted mt-6 max-w-2xl text-lg leading-8 text-pretty sm:text-xl"
+          style={{ animationDelay: "160ms" }}
+        >
+          A native file explorer for Windows, macOS and Linux. Huge folders open
+          instantly, and any file on your computer is a few keystrokes away.
+        </p>
+        <div className="rise mt-10" style={{ animationDelay: "240ms" }}>
+          <DownloadButton
+            secondary={
+              <a href={REPO_URL} className={secondaryButtonClass}>
+                <Star
+                  size={16}
+                  className="transition group-hover:scale-110 group-hover:rotate-[72deg] group-hover:fill-amber-300 group-hover:text-amber-300"
+                  aria-hidden="true"
+                />
+                Star on GitHub
+              </a>
+            }
+          />
         </div>
-      ))}
-    </dl>
-  </section>
-);
+
+        <div
+          ref={tiltRef}
+          className="rise relative mt-14 w-full"
+          style={{ animationDelay: "360ms" }}
+        >
+          <div
+            className="bg-accent/10 pointer-events-none absolute inset-x-[15%] top-10 bottom-0 rounded-full blur-[120px]"
+            aria-hidden="true"
+          />
+          <AppWindow className="tilt-in mx-auto max-w-5xl" />
+          <div
+            className="from-bg pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t to-transparent"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+    </section>
+  );
+};
 
 /** Small framed visual used beside each spotlight. */
 const Stage = ({ children }: { children: ReactNode }) => (
   <div className="card relative overflow-hidden p-6 sm:p-8" aria-hidden="true">
-    <div className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-[radial-gradient(closest-side,rgb(90_200_250/0.14),transparent)]" />
     <div className="relative">{children}</div>
   </div>
 );
@@ -302,12 +322,12 @@ const Spotlight = ({
   visual: ReactNode;
   reverse?: boolean;
 }) => (
-  <div className="grid items-center gap-10 py-10 md:grid-cols-2 md:gap-16">
+  <div className="grid items-center gap-10 py-14 md:grid-cols-2 md:gap-20">
     <div className={reverse ? "md:order-2" : ""}>
       <p className="text-muted mb-2 font-mono text-xs tracking-wider uppercase">
         {eyebrow}
       </p>
-      <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h3 className="text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
         {title}
       </h3>
       <div className="text-muted mt-4 text-lg leading-8">{body}</div>
@@ -359,8 +379,11 @@ const FEATURES: readonly {
 const FeatureGrid = () => (
   <ul className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     {FEATURES.map(({ icon: Icon, title, body, wide }) => (
-      <li key={title} className={`card p-7 ${wide ? "lg:col-span-2" : ""}`}>
-        <span className="bg-accent/10 text-accent ring-accent/20 inline-flex size-10 items-center justify-center rounded-lg ring-1">
+      <li
+        key={title}
+        className={`card group p-7 ${wide ? "lg:col-span-2" : ""}`}
+      >
+        <span className="bg-accent/10 text-accent ring-accent/20 group-hover:bg-accent/20 inline-flex size-10 items-center justify-center rounded-lg ring-1 transition group-hover:-translate-y-0.5">
           <Icon size={18} aria-hidden="true" />
         </span>
         <h3 className="mt-5 text-lg font-semibold">{title}</h3>
@@ -410,14 +433,14 @@ const Privacy = () => (
 );
 
 const FinalCta = () => (
-  <section className="relative overflow-hidden px-6 py-32 text-center">
+  <section className="relative overflow-hidden px-6 py-40 text-center">
     <div
-      className="pointer-events-none absolute bottom-[-40%] left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(90_200_250/0.16),transparent)]"
+      className="pointer-events-none absolute bottom-[-40%] left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.06),transparent)]"
       aria-hidden="true"
     />
     <div className="relative mx-auto flex max-w-2xl flex-col items-center">
       <AnimatedLogo className="w-20" />
-      <h2 className="text-gradient mt-8 text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
+      <h2 className="text-gradient mt-8 text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-7xl">
         Stop waiting on your files.
       </h2>
       <p className="text-muted mt-5 text-lg leading-8">

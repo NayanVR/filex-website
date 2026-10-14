@@ -5,6 +5,7 @@ import {
   Scripts,
   createRootRoute,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { RELEASES_URL, REPO_URL } from "@/lib/release";
 
@@ -18,88 +19,111 @@ const DESCRIPTION =
 
 const navLink = "text-sm text-muted transition hover:text-text";
 
-const RootDocument = () => (
-  <html lang="en">
-    <head>
-      <HeadContent />
-    </head>
-    <body>
-      <a
-        href="#main"
-        className="focus:bg-panel sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:p-2"
-      >
-        Skip to content
-      </a>
-      <header className="border-line bg-bg/70 sticky top-0 z-40 border-b backdrop-blur-xl backdrop-saturate-150">
-        <nav
-          className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6"
-          aria-label="Main"
+/** Feeds the pointer position to the hovered .card so its spotlight follows the cursor. */
+const useCardSpotlight = () => {
+  useEffect(() => {
+    const onMove = (event: PointerEvent) => {
+      const card =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>(".card")
+          : null;
+      if (!card) {
+        return;
+      }
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty("--x", `${event.clientX - rect.left}px`);
+      card.style.setProperty("--y", `${event.clientY - rect.top}px`);
+    };
+    document.addEventListener("pointermove", onMove, { passive: true });
+    return () => document.removeEventListener("pointermove", onMove);
+  }, []);
+};
+
+const RootDocument = () => {
+  useCardSpotlight();
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <a
+          href="#main"
+          className="focus:bg-panel sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:p-2"
         >
-          <Link
-            to="/"
-            className="mr-auto flex items-center gap-2 font-semibold"
+          Skip to content
+        </a>
+        <header className="border-line bg-bg/70 sticky top-0 z-40 border-b backdrop-blur-xl backdrop-saturate-150">
+          <nav
+            className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6"
+            aria-label="Main"
           >
-            <img src="/favicon.svg" alt="" width="24" height="21" />
-            Filex
-          </Link>
-          <Link
-            to="/"
-            hash="features"
-            className={`${navLink} hidden sm:inline`}
-          >
-            Features
-          </Link>
-          <Link to="/privacy" className={navLink}>
-            Privacy
-          </Link>
-          <a href={REPO_URL} className={navLink}>
-            GitHub
-          </a>
-          <Link
-            to="/download"
-            className="bg-text text-bg rounded-md px-3 py-1.5 text-sm font-semibold transition hover:bg-white/85"
-          >
-            Get Filex
-          </Link>
-        </nav>
-      </header>
-      <div id="main">
-        <Outlet />
-      </div>
-      <footer className="border-line border-t">
-        <div className="text-muted mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-sm sm:flex-row sm:items-center">
-          <p className="mr-auto">
-            Filex is open source, dual-licensed MIT / Apache-2.0.
-          </p>
-          <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
-            <a href={REPO_URL} className="hover:text-text">
-              GitHub
-            </a>
-            <a href={RELEASES_URL} className="hover:text-text">
-              Releases
-            </a>
-            <a
-              href={`${REPO_URL}/blob/main/LICENSE-MIT`}
-              className="hover:text-text"
+            <Link
+              to="/"
+              className="mr-auto flex items-center gap-2 font-semibold"
             >
-              MIT licence
-            </a>
-            <a
-              href={`${REPO_URL}/blob/main/LICENSE-APACHE`}
-              className="hover:text-text"
+              <img src="/favicon.svg" alt="" width="24" height="21" />
+              Filex
+            </Link>
+            <Link
+              to="/"
+              hash="features"
+              className={`${navLink} hidden sm:inline`}
             >
-              Apache-2.0 licence
-            </a>
-            <Link to="/privacy" className="hover:text-text">
+              Features
+            </Link>
+            <Link to="/privacy" className={navLink}>
               Privacy
             </Link>
+            <a href={REPO_URL} className={navLink}>
+              GitHub
+            </a>
+            <Link
+              to="/download"
+              className="bg-text text-bg rounded-md px-3 py-1.5 text-sm font-semibold transition hover:bg-white/85"
+            >
+              Get Filex
+            </Link>
           </nav>
+        </header>
+        <div id="main">
+          <Outlet />
         </div>
-      </footer>
-      <Scripts />
-    </body>
-  </html>
-);
+        <footer className="border-line border-t">
+          <div className="text-muted mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-sm sm:flex-row sm:items-center">
+            <p className="mr-auto">
+              Filex is open source, dual-licensed MIT / Apache-2.0.
+            </p>
+            <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
+              <a href={REPO_URL} className="hover:text-text">
+                GitHub
+              </a>
+              <a href={RELEASES_URL} className="hover:text-text">
+                Releases
+              </a>
+              <a
+                href={`${REPO_URL}/blob/main/LICENSE-MIT`}
+                className="hover:text-text"
+              >
+                MIT licence
+              </a>
+              <a
+                href={`${REPO_URL}/blob/main/LICENSE-APACHE`}
+                className="hover:text-text"
+              >
+                Apache-2.0 licence
+              </a>
+              <Link to="/privacy" className="hover:text-text">
+                Privacy
+              </Link>
+            </nav>
+          </div>
+        </footer>
+        <Scripts />
+      </body>
+    </html>
+  );
+};
 
 export const Route = createRootRoute({
   component: RootDocument,
