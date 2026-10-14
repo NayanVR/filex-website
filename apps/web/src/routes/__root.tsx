@@ -19,20 +19,20 @@ const DESCRIPTION =
 
 const navLink = "text-sm text-muted transition hover:text-text";
 
-/** Feeds the pointer position to the hovered .card so its spotlight follows the cursor. */
-const useCardSpotlight = () => {
+/** Feeds the pointer position to the hovered .lit-grid so the light on its lines follows the cursor. */
+const useGridLight = () => {
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
-      const card =
+      const grid =
         event.target instanceof Element
-          ? event.target.closest<HTMLElement>(".card")
+          ? event.target.closest<HTMLElement>(".lit-grid")
           : null;
-      if (!card) {
+      if (!grid) {
         return;
       }
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty("--x", `${event.clientX - rect.left}px`);
-      card.style.setProperty("--y", `${event.clientY - rect.top}px`);
+      const rect = grid.getBoundingClientRect();
+      grid.style.setProperty("--x", `${event.clientX - rect.left}px`);
+      grid.style.setProperty("--y", `${event.clientY - rect.top}px`);
     };
     document.addEventListener("pointermove", onMove, { passive: true });
     return () => document.removeEventListener("pointermove", onMove);
@@ -40,7 +40,7 @@ const useCardSpotlight = () => {
 };
 
 const RootDocument = () => {
-  useCardSpotlight();
+  useGridLight();
   return (
     <html lang="en">
       <head>

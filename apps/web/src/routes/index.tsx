@@ -7,7 +7,6 @@ import {
   Keyboard,
   Lock,
   Palette,
-  ShieldCheck,
   Sparkles,
   Star,
   Tag,
@@ -200,13 +199,6 @@ const Hero = () => {
   );
 };
 
-/** Small framed visual used beside each spotlight. */
-const Stage = ({ children }: { children: ReactNode }) => (
-  <div className="card relative overflow-hidden p-6 sm:p-8" aria-hidden="true">
-    <div className="relative">{children}</div>
-  </div>
-);
-
 const KEYSTROKES = [
   { hits: "48,112", ms: "1.4", text: "i" },
   { hits: "6,031", ms: "1.1", text: "in" },
@@ -322,8 +314,10 @@ const Spotlight = ({
   visual: ReactNode;
   reverse?: boolean;
 }) => (
-  <div className="grid items-center gap-10 py-14 md:grid-cols-2 md:gap-20">
-    <div className={reverse ? "md:order-2" : ""}>
+  <div className="lit-grid md:grid-cols-2">
+    <div
+      className={`flex flex-col justify-center p-8 sm:p-12 ${reverse ? "md:order-2" : ""}`}
+    >
       <p className="text-muted mb-2 font-mono text-xs tracking-wider uppercase">
         {eyebrow}
       </p>
@@ -332,7 +326,12 @@ const Spotlight = ({
       </h3>
       <div className="text-muted mt-4 text-lg leading-8">{body}</div>
     </div>
-    {visual}
+    <div
+      className="flex flex-col justify-center p-8 sm:p-12"
+      aria-hidden="true"
+    >
+      {visual}
+    </div>
   </div>
 );
 
@@ -377,16 +376,16 @@ const FEATURES: readonly {
 ];
 
 const FeatureGrid = () => (
-  <ul className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <ul className="lit-grid sm:grid-cols-2 lg:grid-cols-4">
     {FEATURES.map(({ icon: Icon, title, body, wide }) => (
-      <li
-        key={title}
-        className={`card group p-7 ${wide ? "lg:col-span-2" : ""}`}
-      >
-        <span className="bg-accent/10 text-accent ring-accent/20 group-hover:bg-accent/20 inline-flex size-10 items-center justify-center rounded-lg ring-1 transition group-hover:-translate-y-0.5">
-          <Icon size={18} aria-hidden="true" />
-        </span>
-        <h3 className="mt-5 text-lg font-semibold">{title}</h3>
+      <li key={title} className={`group p-8 ${wide ? "lg:col-span-2" : ""}`}>
+        <Icon
+          size={20}
+          strokeWidth={1.5}
+          className="text-muted group-hover:text-accent transition group-hover:-translate-y-0.5"
+          aria-hidden="true"
+        />
+        <h3 className="mt-6 text-lg font-semibold">{title}</h3>
         <p className="text-muted mt-2 leading-7">{body}</p>
       </li>
     ))}
@@ -409,26 +408,26 @@ const PRIVACY = [
 ] as const;
 
 const Privacy = () => (
-  <div className="card grid gap-10 p-8 sm:p-12 lg:grid-cols-[auto_1fr]">
-    <span className="bg-accent/10 text-accent ring-accent/20 inline-flex size-14 items-center justify-center rounded-2xl ring-1">
-      <ShieldCheck size={26} aria-hidden="true" />
-    </span>
-    <div>
-      <ul className="grid gap-8 md:grid-cols-3">
-        {PRIVACY.map(({ title, body }) => (
-          <li key={title}>
-            <h3 className="font-semibold">{title}</h3>
-            <p className="text-muted mt-2 text-sm leading-6">{body}</p>
-          </li>
-        ))}
-      </ul>
-      <Link
-        to="/privacy"
-        className="text-accent mt-8 inline-flex items-center gap-1.5 text-sm font-semibold"
-      >
-        Read the full privacy policy <ArrowRight size={14} aria-hidden="true" />
-      </Link>
-    </div>
+  <div>
+    <ul className="lit-grid md:grid-cols-3">
+      {PRIVACY.map(({ title, body }) => (
+        <li key={title} className="p-8">
+          <h3 className="font-semibold">{title}</h3>
+          <p className="text-muted mt-2 text-sm leading-6">{body}</p>
+        </li>
+      ))}
+    </ul>
+    <Link
+      to="/privacy"
+      className="group text-accent mt-8 inline-flex items-center gap-1.5 text-sm font-semibold"
+    >
+      Read the full privacy policy{" "}
+      <ArrowRight
+        size={14}
+        className="transition group-hover:translate-x-0.5"
+        aria-hidden="true"
+      />
+    </Link>
   </div>
 );
 
@@ -472,11 +471,7 @@ const HomePage = () => (
         eyebrow="01 · Search"
         title="Instant filename search"
         body="Type part of a file's name and it shows up instantly, from anywhere on your computer. Even with 200,000 files, results arrive in under 2 milliseconds, and Filex keeps up as files are added, moved or deleted."
-        visual={
-          <Stage>
-            <SearchVisual />
-          </Stage>
-        }
+        visual={<SearchVisual />}
       />
       <Spotlight
         reverse
@@ -488,21 +483,13 @@ const HomePage = () => (
             <code>invoice ext:pdf modified:today</code>.
           </>
         }
-        visual={
-          <Stage>
-            <ChipsVisual />
-          </Stage>
-        }
+        visual={<ChipsVisual />}
       />
       <Spotlight
         eyebrow="03 · Browsing"
         title="Huge folders, no lag"
         body="Open a folder with hundreds of thousands of files and scroll straight away. Filex only draws the rows you can see."
-        visual={
-          <Stage>
-            <FolderVisual />
-          </Stage>
-        }
+        visual={<FolderVisual />}
       />
       <FeatureGrid />
     </Section>
