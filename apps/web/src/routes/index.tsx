@@ -16,7 +16,11 @@ import type { LucideIcon } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AppWindow } from "@/components/app-window";
-import { DownloadButton, InstallSection } from "@/components/download";
+import {
+  DownloadButton,
+  InstallSection,
+  secondaryButtonClass,
+} from "@/components/download";
 import { REPO_URL, useAssets } from "@/lib/release";
 
 // The three logo layers fly in from slightly different places and settle into the mark.
@@ -133,17 +137,14 @@ const Hero = () => (
         instantly, and you can find any file on your computer just by typing
         part of its name.
       </p>
-      <div
-        className="rise mt-10 flex flex-col items-center gap-4 sm:flex-row sm:items-start"
-        style={{ animationDelay: "240ms" }}
-      >
-        <DownloadButton />
-        <a
-          href={REPO_URL}
-          className="border-line text-text inline-flex items-center gap-2 rounded-lg border bg-white/[0.03] px-5 py-2 leading-[22px] font-semibold whitespace-nowrap transition hover:bg-white/[0.07]"
-        >
-          Star on GitHub
-        </a>
+      <div className="rise mt-10" style={{ animationDelay: "240ms" }}>
+        <DownloadButton
+          secondary={
+            <a href={REPO_URL} className={secondaryButtonClass}>
+              Star on GitHub
+            </a>
+          }
+        />
       </div>
 
       <div

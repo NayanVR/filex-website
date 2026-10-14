@@ -17,8 +17,10 @@ const OS_LABEL: Record<Os, string> = {
 };
 const COPIED_MS = 1500;
 
-const buttonClass =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 font-semibold text-on-accent shadow-[0_0_0_1px_rgb(255_255_255/0.15)_inset,0_8px_30px_-6px_rgb(90_200_250/0.6)] transition hover:brightness-110";
+const buttonBase =
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-transparent px-5 py-3 font-semibold whitespace-nowrap transition";
+export const secondaryButtonClass = `${buttonBase} border-line bg-white/[0.03] text-text hover:bg-white/[0.07]`;
+const buttonClass = `${buttonBase} bg-accent text-on-accent shadow-[0_0_0_1px_rgb(255_255_255/0.15)_inset,0_8px_30px_-6px_rgb(90_200_250/0.6)] hover:brightness-110`;
 
 const DownloadIcon = () => (
   <svg
@@ -69,7 +71,7 @@ export const CopyCommand = ({ command }: { command: string }) => {
 };
 
 /** Hero call to action: picks the visitor's OS once the page is in the browser. */
-export const DownloadButton = () => {
+export const DownloadButton = ({ secondary }: { secondary?: ReactNode }) => {
   const os = useOs();
   const assets = useAssets();
 
@@ -82,17 +84,22 @@ export const DownloadButton = () => {
           macOS on Apple Silicon, via Homebrew. The second command lets macOS
           open Filex, which isn&apos;t notarized yet.
         </p>
+        {secondary}
       </div>
     );
   }
 
   const asset = os && assets[os];
   return (
-    <div className="flex flex-col items-center gap-2">
-      <a className={buttonClass} href={asset?.url ?? RELEASES_URL}>
-        <DownloadIcon />
-        {os ? `Download for ${OS_LABEL[os]}` : "Download Filex"}
-      </a>
+    <div className="flex flex-col items-center gap-3">
+      {/* Equal-width columns keep both buttons the same size, side by side. */}
+      <div className="grid w-full gap-3 sm:auto-cols-fr sm:grid-flow-col">
+        <a className={buttonClass} href={asset?.url ?? RELEASES_URL}>
+          <DownloadIcon />
+          {os ? `Download for ${OS_LABEL[os]}` : "Download Filex"}
+        </a>
+        {secondary}
+      </div>
       <p className="text-muted text-sm">
         {assets.version ? `v${assets.version} · ` : ""}
         Windows, macOS and Linux ·{" "}
