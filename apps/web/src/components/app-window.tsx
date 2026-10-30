@@ -14,12 +14,12 @@ import {
   Search,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 /**
- * A drawn (not screenshotted) Filex window that types search queries on a loop.
- * Colours mirror the app's default dark theme in filex/src/ui/theme.rs.
- * ponytail: stand-in until real screenshots or a screen recording exist.
+ * A Filex window built in HTML, colours from the app's dark theme (filex/src/ui/theme.rs).
+ * Its search field is real: it types sample queries on a loop until the visitor types their own.
+ * ponytail: drawn stand-in until real screenshots or a screen recording exist.
  */
 
 type Kind = "archive" | "code" | "doc" | "folder" | "image" | "music" | "video";
@@ -34,25 +34,28 @@ const KIND_ICON: Record<Kind, LucideIcon> = {
   video: Film,
 };
 
+// theme::fixed::kind; folders take the accent.
 const KIND_TINT: Record<Kind, string> = {
-  archive: "text-amber-300",
-  code: "text-emerald-300",
-  doc: "text-sky-300",
-  folder: "text-accent",
-  image: "text-pink-300",
-  music: "text-violet-300",
-  video: "text-orange-300",
+  archive: "#d08b1e",
+  code: "#4c8bf0",
+  doc: "#8fa6bd",
+  folder: "#5ac8fa",
+  image: "#30a46c",
+  music: "#e0559a",
+  video: "#a78bfa",
 };
 
-const FILES: readonly {
+interface SampleFile {
   name: string;
   path: string;
   kind: Kind;
   size: string;
   date: string;
-}[] = [
+}
+
+const FILES: readonly SampleFile[] = [
   {
-    date: "Today, 09:14",
+    date: "Today",
     kind: "doc",
     name: "invoice-2026-10.pdf",
     path: "~/Documents/Finance",
@@ -80,16 +83,16 @@ const FILES: readonly {
     size: "48 KB",
   },
   {
-    date: "Today, 11:02",
+    date: "Today",
     kind: "image",
     name: "IMG_4021.HEIC",
     path: "~/Pictures/Iceland",
     size: "3.1 MB",
   },
   {
-    date: "Today, 11:02",
+    date: "Today",
     kind: "image",
-    name: "IMG_4022.HEIC",
+    name: "gullfoss-snow.jpg",
     path: "~/Pictures/Iceland",
     size: "2.9 MB",
   },
@@ -108,7 +111,7 @@ const FILES: readonly {
     size: "—",
   },
   {
-    date: "Today, 08:40",
+    date: "Today",
     kind: "code",
     name: "main.rs",
     path: "~/code/filex/src",
@@ -136,7 +139,7 @@ const FILES: readonly {
     size: "88 MB",
   },
   {
-    date: "Today, 10:21",
+    date: "Today",
     kind: "doc",
     name: "Resume 2026.pdf",
     path: "~/Documents/Career",
@@ -156,12 +159,82 @@ const FILES: readonly {
     path: "~/Documents/Home",
     size: "1.1 MB",
   },
+  {
+    date: "9 Jun",
+    kind: "doc",
+    name: "passport-scan.pdf",
+    path: "~/Documents/Travel",
+    size: "2.4 MB",
+  },
+  {
+    date: "9 Jun",
+    kind: "doc",
+    name: "boarding-pass-KEF.pdf",
+    path: "~/Downloads",
+    size: "180 KB",
+  },
+  {
+    date: "22 Apr",
+    kind: "archive",
+    name: "tax-return-2025.zip",
+    path: "~/Documents/Finance",
+    size: "6.8 MB",
+  },
+  {
+    date: "Today",
+    kind: "image",
+    name: "screenshot 09.41.png",
+    path: "~/Desktop",
+    size: "1.4 MB",
+  },
+  {
+    date: "30 Sep",
+    kind: "music",
+    name: "voice memo 12.m4a",
+    path: "~/Music/Memos",
+    size: "4.2 MB",
+  },
+  {
+    date: "4 Sep",
+    kind: "doc",
+    name: "invoice-2026-08.pdf",
+    path: "~/Documents/Finance",
+    size: "204 KB",
+  },
+  {
+    date: "21 Sep",
+    kind: "doc",
+    name: "iceland-itinerary.pdf",
+    path: "~/Documents/Travel",
+    size: "320 KB",
+  },
+  {
+    date: "2 Feb",
+    kind: "doc",
+    name: "resume-design-roles.pdf",
+    path: "~/Documents/Career",
+    size: "102 KB",
+  },
+  {
+    date: "11 Mar",
+    kind: "doc",
+    name: "passport-renewal-form.pdf",
+    path: "~/Documents/Travel",
+    size: "640 KB",
+  },
+  {
+    date: "1 Oct",
+    kind: "image",
+    name: "bus-pass-october.png",
+    path: "~/Downloads",
+    size: "210 KB",
+  },
 ];
 
-const QUERIES = ["invoice", "iceland", "resume", "demo"] as const;
+const QUERIES = ["invoice", "iceland", "2026"] as const;
 const TYPE_MS = 110;
-const HOLD_MS = 1900;
-const VISIBLE_ROWS = 7;
+const HOLD_MS = 2200;
+const VISIBLE_ROWS = 6;
 
 const SIDEBAR = [
   { icon: House, label: "Home" },
@@ -169,24 +242,22 @@ const SIDEBAR = [
   { icon: FileText, label: "Documents" },
   { icon: Download, label: "Downloads" },
   { icon: Clock, label: "Recents" },
+  { icon: HardDrive, label: "Macintosh HD" },
 ] as const;
 
-const TAGS = [
-  { color: "bg-red-400", label: "Urgent" },
-  { color: "bg-amber-300", label: "Work" },
-  { color: "bg-emerald-400", label: "Personal" },
-] as const;
-
-/** Cycles through QUERIES one keystroke at a time; static under reduced motion. */
-const useTypedQuery = (): string => {
+/** Types QUERIES one keystroke at a time until `stopped`; static under reduced motion. */
+const useTypedQuery = (stopped: boolean): string => {
   const [text, setText] = useState<string>(QUERIES[0]);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      stopped ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       return;
     }
     let query = 0;
-    let typed = 0;
+    let typed = QUERIES[0].length;
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
       const target = QUERIES[query];
@@ -203,11 +274,9 @@ const useTypedQuery = (): string => {
         tick();
       }, HOLD_MS);
     };
-    // Start by holding the first query, which is already rendered.
-    typed = QUERIES[0].length;
     tick();
     return () => clearTimeout(timer);
-  }, []);
+  }, [stopped]);
 
   return text;
 };
@@ -220,7 +289,7 @@ const Highlight = ({ name, query }: { name: string; query: string }) => {
   return (
     <>
       {name.slice(0, at)}
-      <mark className="text-accent rounded-sm bg-transparent font-semibold">
+      <mark className="bg-transparent font-semibold text-[#5ac8fa]">
         {name.slice(at, at + query.length)}
       </mark>
       {name.slice(at + query.length)}
@@ -231,98 +300,84 @@ const Highlight = ({ name, query }: { name: string; query: string }) => {
 /** Selected first hit while searching, otherwise zebra stripes like the app. */
 const rowTint = (index: number, query: string): string => {
   if (index === 0 && query) {
-    return "bg-[#233e50]";
+    return "bg-[#203a4a]";
   }
-  return index % 2 ? "bg-[#1b1f25]" : "";
+  return index % 2 ? "bg-[#222328]" : "";
 };
 
-const Sidebar = () => (
-  <aside className="hidden w-44 shrink-0 flex-col gap-5 border-r border-white/6 bg-[#14171b] p-3 text-[12px] md:flex">
-    <div>
-      <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-[#6b7584] uppercase">
-        Favourites
-      </p>
-      {SIDEBAR.map(({ icon: Icon, label }, index) => (
-        <div
-          key={label}
-          className={`flex items-center gap-2 rounded-md px-2 py-1 ${index === 2 ? "text-text bg-white/6" : "text-muted"}`}
-        >
-          <Icon size={13} className="text-accent" aria-hidden="true" />
-          {label}
-        </div>
-      ))}
-    </div>
-    <div>
-      <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-[#6b7584] uppercase">
-        Drives
-      </p>
-      <div className="text-muted flex items-center gap-2 px-2 py-1">
-        <HardDrive size={13} className="text-accent" aria-hidden="true" />
-        Macintosh HD
-      </div>
-    </div>
-    <div>
-      <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-[#6b7584] uppercase">
-        Tags
-      </p>
-      {TAGS.map(({ color, label }) => (
-        <div
-          key={label}
-          className="text-muted flex items-center gap-2 px-2 py-1"
-        >
-          <span className={`size-2 rounded-full ${color}`} />
-          {label}
-        </div>
-      ))}
-    </div>
-  </aside>
-);
-
 export const AppWindow = ({ className = "" }: { className?: string }) => {
-  const query = useTypedQuery();
-  const matches = FILES.filter(({ name }) =>
-    name.toLowerCase().includes(query.toLowerCase())
-  );
-  const rows = query ? matches : FILES;
-  // Fake but plausible: more indexed hits for shorter queries.
-  const hits = query
-    ? Math.max(rows.length, Math.round(48_000 / query.length ** 3))
-    : 0;
+  const [own, setOwn] = useState<string | null>(null);
+  const typed = useTypedQuery(own !== null);
+  const query = (own ?? typed).trim();
+  const id = useId();
+
+  const rows = query
+    ? FILES.filter(({ name, path }) =>
+        `${name} ${path}`.toLowerCase().includes(query.toLowerCase())
+      )
+    : FILES;
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border border-white/10 bg-[#181b20] text-left shadow-[0_40px_120px_-30px_rgb(0_0_0/0.8)] ring-1 ring-black/40 ${className}`}
-      aria-hidden="true"
+      data-ui
+      className={`font-ui overflow-hidden rounded-[14px] bg-[#1c1d21] text-left text-[13px] text-[#ececef] ${className}`}
     >
-      {/* Title bar */}
-      <div className="flex h-11 items-center gap-3 border-b border-white/6 bg-[#14171b] px-4">
+      {/* Title bar: traffic lights inset into the tab bar, search field in the middle. */}
+      <div className="flex h-12 items-center gap-3 bg-[#131416] px-4">
         <div className="flex gap-2" aria-hidden="true">
           <span className="size-3 rounded-full bg-[#ff5f57]" />
           <span className="size-3 rounded-full bg-[#febc2e]" />
           <span className="size-3 rounded-full bg-[#28c840]" />
         </div>
-        <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-md border border-white/8 bg-[#1f242b] px-3 py-1.5 text-[12px]">
+        <label className="mx-auto flex w-full max-w-md items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 focus-within:bg-[#1c1d21] focus-within:ring-2 focus-within:ring-[#5ac8fa]">
           <Search
-            size={13}
-            className="text-muted shrink-0"
+            size={14}
+            className="shrink-0 text-[#a3a7b0]"
             aria-hidden="true"
           />
-          <span className="text-text font-mono">{query}</span>
-          <span className="caret bg-accent -ml-1.5 h-3.5 w-px" />
-          <span className="ml-auto text-[10px] text-[#6b7584]">⌘K</span>
-        </div>
-        <div className="w-14" />
+          <span className="sr-only">Try it: search the sample files</span>
+          <input
+            type="search"
+            value={own ?? typed}
+            onChange={(event) => setOwn(event.target.value)}
+            onFocus={() => setOwn((current) => current ?? typed)}
+            aria-controls={`${id}-results`}
+            placeholder="Search files"
+            autoComplete="off"
+            spellCheck={false}
+            className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#a3a7b0]"
+          />
+          {own === null && (
+            <span
+              className="caret -ml-1.5 h-3.5 w-px bg-[#5ac8fa]"
+              aria-hidden="true"
+            />
+          )}
+        </label>
+        <span className="w-12" aria-hidden="true" />
       </div>
 
-      <div className="flex h-[340px] sm:h-[380px]">
-        <Sidebar />
+      <div className="flex h-[311px] sm:h-[366px]">
+        <aside
+          className="hidden w-44 shrink-0 flex-col gap-0.5 bg-[#131416] p-3 md:flex"
+          aria-hidden="true"
+        >
+          {SIDEBAR.map(({ icon: Icon, label }, index) => (
+            <div
+              key={label}
+              className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${index === 2 ? "bg-white/7" : "text-[#a3a7b0]"}`}
+            >
+              <Icon size={14} className="text-[#5ac8fa]" />
+              {label}
+            </div>
+          ))}
+        </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-white/6 px-4 py-2 text-[10px] font-semibold tracking-wider text-[#6b7584] uppercase sm:grid-cols-[minmax(0,1fr)_7rem_4.5rem]">
-            <span>Name</span>
-            <span className="hidden sm:block">Modified</span>
-            <span className="text-right">Size</span>
-          </div>
-          <ul className="flex-1 overflow-hidden text-[12.5px]">
+          <ul
+            id={`${id}-results`}
+            className="flex-1 overflow-hidden"
+            aria-label="Results"
+          >
             {rows
               .slice(0, VISIBLE_ROWS)
               .map(({ name, path, kind, size, date }, index) => {
@@ -330,42 +385,42 @@ export const AppWindow = ({ className = "" }: { className?: string }) => {
                 return (
                   <li
                     key={name}
-                    className={`row-in grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-2 sm:grid-cols-[minmax(0,1fr)_7rem_4.5rem] ${rowTint(index, query)}`}
+                    className={`grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-2 sm:grid-cols-[minmax(0,1fr)_5.5rem_4.5rem] ${rowTint(index, query)}`}
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
                       <Icon
-                        size={15}
-                        className={`shrink-0 ${KIND_TINT[kind]}`}
+                        size={16}
+                        className="shrink-0"
+                        style={{ color: KIND_TINT[kind] }}
                         aria-hidden="true"
                       />
                       <span className="min-w-0">
-                        <span className="text-text block truncate">
+                        <span className="block truncate">
                           <Highlight name={name} query={query} />
                         </span>
-                        <span className="block truncate text-[10.5px] text-[#6b7584]">
+                        <span className="block truncate text-[13px] text-[#a3a7b0]">
                           {path}
                         </span>
                       </span>
                     </span>
-                    <span className="text-muted hidden sm:block">{date}</span>
-                    <span className="text-muted text-right tabular-nums">
+                    <span className="hidden text-[#a3a7b0] sm:block">
+                      {date}
+                    </span>
+                    <span className="text-right text-[#a3a7b0] tabular-nums">
                       {size}
                     </span>
                   </li>
                 );
               })}
           </ul>
-          <div className="flex items-center gap-3 border-t border-white/6 bg-[#14171b] px-4 py-1.5 text-[11px] text-[#6b7584] tabular-nums">
-            {query ? (
-              <>
-                <span>{hits.toLocaleString("en-US")} results</span>
-                <span className="text-accent">1.{query.length + 1} ms</span>
-              </>
-            ) : (
-              <span>13 items</span>
-            )}
-            <span className="ml-auto">213,402 files indexed</span>
-          </div>
+          <p
+            className="flex items-center gap-3 bg-[#131416] px-4 py-2 text-[#a3a7b0] tabular-nums"
+            aria-live="polite"
+          >
+            {query
+              ? `${rows.length} of ${FILES.length} sample files match “${query}”`
+              : `${FILES.length} sample files`}
+          </p>
         </div>
       </div>
     </div>

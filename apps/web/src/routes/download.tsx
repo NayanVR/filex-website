@@ -4,9 +4,9 @@ import { InstallSection } from "@/components/download";
 import { RELEASES_URL } from "@/lib/release";
 
 const DownloadPage = () => (
-  <main className="mx-auto max-w-6xl px-6 py-16">
-    <h1 className="text-3xl font-semibold tracking-tight">Download Filex</h1>
-    <p className="text-muted mt-3 mb-10 max-w-2xl">
+  <main className="frame pt-16 pb-[clamp(96px,12vw,200px)]">
+    <h1 className="text-display leading-[0.98]">Download Filex</h1>
+    <p className="text-lead mt-8 mb-20 max-w-[40ch]">
       Free and open source. Pick your platform below, or browse every file on
       the{" "}
       <a

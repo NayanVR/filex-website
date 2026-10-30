@@ -4,9 +4,11 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useLocation,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import type { CSSProperties } from "react";
 
+import { Reveal } from "@/components/folder";
 import { RELEASES_URL, REPO_URL } from "@/lib/release";
 
 import appCss from "../index.css?url";
@@ -17,33 +19,25 @@ const TITLE = "Filex: a fast, native file explorer";
 const DESCRIPTION =
   "A native file explorer for Windows, macOS and Linux. Huge folders open without lag, and search covers every filename on your drives as you type.";
 
-const navLink = "text-sm text-muted transition hover:text-text";
+const navLink = "hidden transition-colors hover:text-accent sm:inline";
 
-/** Feeds the pointer position to the hovered .lit-grid so the light on its lines follows the cursor. */
-const useGridLight = () => {
-  useEffect(() => {
-    const onMove = (event: PointerEvent) => {
-      const grid =
-        event.target instanceof Element
-          ? event.target.closest<HTMLElement>(".lit-grid")
-          : null;
-      if (!grid) {
-        return;
-      }
-      const rect = grid.getBoundingClientRect();
-      grid.style.setProperty("--x", `${event.clientX - rect.left}px`);
-      grid.style.setProperty("--y", `${event.clientY - rect.top}px`);
-    };
-    document.addEventListener("pointermove", onMove, { passive: true });
-    return () => document.removeEventListener("pointermove", onMove);
-  }, []);
-};
+// The three logo layers sit apart and settle into the mark as the footer arrives.
+const LOGO_LAYERS = [
+  { from: "translateY(-10%)", name: "back" },
+  { from: "translateY(14%)", name: "front" },
+  { from: "scale(0.7) rotate(-10deg)", name: "mark" },
+] as const;
+
+const PHOTO_CREDIT =
+  "https://commons.wikimedia.org/wiki/File:Iceland_-_2017-02-22_-_Gullfoss_-_3684.jpg";
 
 const RootDocument = () => {
-  useGridLight();
+  const pathname = useLocation({ select: (location) => location.pathname });
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Marks scripting as available before paint, so entrance states never hide content without JS. */}
+        <script>{"document.documentElement.classList.add('js')"}</script>
         <HeadContent />
       </head>
       <body>
@@ -53,72 +47,101 @@ const RootDocument = () => {
         >
           Skip to content
         </a>
-        <header className="border-line bg-bg/70 sticky top-0 z-40 border-b backdrop-blur-xl backdrop-saturate-150">
-          <nav
-            className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6"
-            aria-label="Main"
-          >
+        <header className="frame">
+          <nav className="flex h-[72px] items-center gap-8" aria-label="Main">
             <Link
               to="/"
-              className="mr-auto flex items-center gap-2 font-semibold"
+              className="text-lead mr-auto flex items-center gap-2.5 font-medium"
             >
-              <img src="/favicon.svg" alt="" width="24" height="21" />
+              <img src="/favicon.svg" alt="" width="30" height="26" />
               Filex
             </Link>
-            <Link
-              to="/"
-              hash="features"
-              className={`${navLink} hidden sm:inline`}
-            >
+            <Link to="/" hash="features" className={navLink}>
               Features
+            </Link>
+            <Link to="/" hash="install" className={navLink}>
+              Install
             </Link>
             <Link to="/privacy" className={navLink}>
               Privacy
             </Link>
-            <a href={REPO_URL} className={navLink}>
+            <a href={REPO_URL} className="hover:text-accent transition-colors">
               GitHub
             </a>
-            <Link
-              to="/download"
-              className="bg-text text-bg rounded-md px-3 py-1.5 text-sm font-semibold transition hover:bg-white/85"
-            >
-              Get Filex
-            </Link>
           </nav>
         </header>
         <div id="main">
           <Outlet />
         </div>
-        <footer className="border-line border-t">
-          <div className="text-muted mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-sm sm:flex-row sm:items-center">
-            <p className="mr-auto">
-              Filex is open source, dual-licensed MIT / Apache-2.0.
-            </p>
-            <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
-              <a href={REPO_URL} className="hover:text-text">
-                GitHub
-              </a>
-              <a href={RELEASES_URL} className="hover:text-text">
+        <footer className="frame bg-panel overflow-hidden pt-[clamp(48px,6vw,96px)] pb-10 [--mark-size:min(31vw,600px)]">
+          {/* The mark, built large: the logo's three layers beside the name at full width. */}
+          <div
+            className="flex items-baseline gap-[0.08em] text-[length:var(--mark-size)] leading-none"
+            data-reveal
+            aria-hidden="true"
+          >
+            <div className="relative aspect-[700/601] h-[0.72em] shrink-0">
+              {LOGO_LAYERS.map(({ name, from }) => (
+                <img
+                  key={name}
+                  src={`/logo/${name}.svg`}
+                  alt=""
+                  width="350"
+                  height="300"
+                  loading="lazy"
+                  className="logo-layer absolute inset-0 h-full w-full"
+                  style={{ "--from": from } as CSSProperties}
+                />
+              ))}
+            </div>
+            <p className="-mb-[0.2em] font-medium tracking-[-0.05em]">Filex</p>
+          </div>
+          <div className="mt-14 grid gap-8 text-[15px] sm:grid-cols-2 lg:grid-cols-12">
+            <nav
+              className="flex flex-col gap-2 lg:col-span-3"
+              aria-label="Footer"
+            >
+              <Link to="/download" className="hover:text-accent">
+                Download
+              </Link>
+              <a href={RELEASES_URL} className="hover:text-accent">
                 Releases
               </a>
+              <a href={REPO_URL} className="hover:text-accent">
+                GitHub
+              </a>
+              <Link to="/privacy" className="hover:text-accent">
+                Privacy
+              </Link>
+            </nav>
+            <div className="flex flex-col gap-2 lg:col-span-3">
               <a
                 href={`${REPO_URL}/blob/main/LICENSE-MIT`}
-                className="hover:text-text"
+                className="hover:text-accent"
               >
                 MIT licence
               </a>
               <a
                 href={`${REPO_URL}/blob/main/LICENSE-APACHE`}
-                className="hover:text-text"
+                className="hover:text-accent"
               >
                 Apache-2.0 licence
               </a>
-              <Link to="/privacy" className="hover:text-text">
-                Privacy
-              </Link>
-            </nav>
+            </div>
+            <p className="text-muted lg:col-span-5 lg:col-start-8">
+              Filex is open source, dual-licensed MIT / Apache-2.0. Preview
+              photo:{" "}
+              <a
+                href={PHOTO_CREDIT}
+                className="hover:text-accent underline underline-offset-2"
+              >
+                &ldquo;Gullfoss&rdquo; by Pierre-Selim Huard
+              </a>
+              , CC BY 4.0, via Wikimedia Commons.
+            </p>
           </div>
         </footer>
+        <Reveal key={pathname} />
         <Scripts />
       </body>
     </html>
@@ -133,7 +156,7 @@ export const Route = createRootRoute({
       {
         as: "font",
         crossOrigin: "anonymous",
-        href: "/fonts/Inter-Regular.woff2",
+        href: "/fonts/Roundo-500.woff2",
         rel: "preload",
         type: "font/woff2",
       },
@@ -146,7 +169,7 @@ export const Route = createRootRoute({
       { content: "width=device-width, initial-scale=1", name: "viewport" },
       { title: TITLE },
       { content: DESCRIPTION, name: "description" },
-      { content: "#0c0e11", name: "theme-color" },
+      { content: "#131416", name: "theme-color" },
       { content: "website", property: "og:type" },
       { content: "Filex", property: "og:site_name" },
       { content: TITLE, property: "og:title" },
@@ -162,9 +185,9 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: () => (
-    <main className="mx-auto max-w-2xl px-6 py-32 text-center">
-      <h1 className="text-3xl font-semibold">Page not found</h1>
-      <p className="text-muted mt-4">
+    <main className="frame py-32">
+      <h1 className="text-head">Page not found</h1>
+      <p className="mt-4">
         <Link to="/" className="text-accent underline underline-offset-2">
           Back to the home page
         </Link>
