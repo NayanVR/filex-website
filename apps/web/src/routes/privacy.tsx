@@ -8,7 +8,7 @@ import { markdownToHtml } from "@/lib/markdown";
 const policyHtml = markdownToHtml(privacyMd);
 
 const PrivacyPage = () => (
-  <main className="mx-auto max-w-2xl px-6 py-16">
+  <main className="frame mx-auto max-w-3xl pt-16 pb-32">
     <article
       className="prose-policy"
       dangerouslySetInnerHTML={{ __html: policyHtml }}

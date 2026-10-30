@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+/* Roundo (Fontshare, ITF Free Font Licence) sets the page; Inter is kept for the product's own interface. */
+@font-face {
+  font-family: Roundo;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Roundo-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Roundo;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/Roundo-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Roundo;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/Roundo-600.woff2") format("woff2");
+}
+
 @font-face {
   font-family: Inter;
   font-weight: 400;
@@ -14,27 +36,48 @@
   src: url("/fonts/Inter-SemiBold.woff2") format("woff2");
 }
 
-/* Dark only: matches the app's default theme and reads as the product. */
+/* Colours are the app's own (filex/src/ui/theme.rs): dark shell, canvas, sky accent, and the mark's deep blue. */
 :root {
   color-scheme: dark;
-  --bg: #0c0e11;
-  --panel: #13161a;
-  --text: #eef2f6;
-  --muted: #8f9aa8;
-  --line: rgb(255 255 255 / 8%);
+  --bg: #131416;
+  --panel: #1c1d21;
+  --raised: #26272c;
+  --text: #ececef;
+  --muted: #a3a7b0;
   --accent: #5ac8fa;
-  --on-accent: #0c0e11;
+  --on-accent: #131416;
+  --deep: #006ddc;
+  --paper: #cfe6fb;
+  --paper-ink: #22303d;
+  --amber: #d08b1e;
+  --green: #30a46c;
+  --pink: #e0559a;
+  --line: #2a2c31;
+  /* One corner radius for the page, from the logo's rounded folder. */
+  --r: clamp(14px, 1.4vw, 22px);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --margin: clamp(16px, 3vw, 40px);
 }
 
 @theme inline {
-  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: Roundo, ui-sans-serif, system-ui, sans-serif;
+  --font-ui: Inter, ui-sans-serif, system-ui, sans-serif;
   --color-bg: var(--bg);
   --color-panel: var(--panel);
+  --color-raised: var(--raised);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
+  --color-deep: var(--deep);
+  --color-paper: var(--paper);
+  --color-paper-ink: var(--paper-ink);
+  --text-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --text-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --text-head: clamp(2.25rem, 1.3rem + 3.4vw, 4.25rem);
+  --text-display: clamp(3rem, 1rem + 4.6vw, 6rem);
 }
 
 @layer base {
@@ -42,98 +85,121 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-bg text-text font-sans antialiased;
+    @apply bg-bg text-text text-body font-sans antialiased;
+    line-height: 1.5;
+  }
+  h1,
+  h2,
+  h3 {
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    text-wrap: balance;
   }
   :focus-visible {
     @apply outline-accent outline-2 outline-offset-2;
   }
   code,
   kbd {
-    @apply border-line bg-panel rounded-md border px-1.5 py-0.5 font-mono text-[0.85em];
+    @apply bg-raised rounded-md px-1.5 py-0.5 font-mono text-[0.85em];
   }
+}
+
+@utility frame {
+  padding-inline: var(--margin);
 }
 
 @utility prose-policy {
   & h1 {
-    @apply mb-6 text-3xl font-semibold tracking-tight;
+    @apply text-head mb-8;
   }
   & h2 {
-    @apply mt-10 mb-3 text-xl font-semibold;
+    @apply text-lead mt-12 mb-3;
   }
   & p,
   & ul {
-    @apply text-muted mb-4 leading-7;
+    @apply mb-4 leading-7;
   }
   & ul {
     @apply list-disc space-y-1 pl-6;
   }
   & strong {
-    @apply text-text font-semibold;
+    @apply font-semibold;
   }
   & a {
     @apply text-accent underline underline-offset-2;
   }
 }
 
-/* Logo assembles from its three layers on first paint. */
-@keyframes logo-in {
-  from {
-    opacity: 0;
-    transform: var(--from);
+@layer components {
+  /*
+ * The motif: Filex's folder, tab on the right with the logo's S-curved shoulder.
+ * .folder > .folder-tab (shoulder svg + flat) + .folder-body. --fill colours all three.
+ */
+  .folder {
+    display: flex;
+    flex-direction: column;
+    --tab-h: clamp(18px, 3vw, 44px);
+  }
+  .folder-tab {
+    display: flex;
+    align-self: flex-end;
+    width: var(--tab-w, 38%);
+    height: var(--tab-h);
+    margin-bottom: -1px;
+    color: var(--fill);
+  }
+  .folder-tab > svg {
+    flex: none;
+    /* Overlap the flat part by a pixel so no seam shows between them. */
+    margin-right: -1px;
+    width: calc(var(--tab-h) * 2.2);
+    height: 100%;
+  }
+  .folder-tab > span {
+    flex: 1;
+    background: var(--fill);
+    border-top-right-radius: var(--r);
+  }
+  .folder-body {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    background: var(--fill);
+    border-radius: var(--r) 0 var(--r) var(--r);
+    transition: background-color 600ms ease;
+  }
+  .folder-tab,
+  .folder-tab > span {
+    transition:
+      color 600ms ease,
+      background-color 600ms ease;
   }
 }
 
-.logo-layer {
-  animation: logo-in 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* Entrances: hidden only once the inline head script marks scripting as available. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 700ms var(--ease-out),
+    transform 900ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+.js [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
 }
 
-.text-gradient {
-  background: linear-gradient(180deg, #ffffff 30%, #a7b0bb 100%);
-  background-clip: text;
-  color: transparent;
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 }
-
-/*
- * Lit grid: panes split by hairlines instead of boxed cards. The 1px gaps show the
- * grid's own background, so a light following the cursor (--x/--y from useGridLight)
- * runs along the lines.
- */
-@property --glow {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 0;
-}
-
-.lit-grid {
-  display: grid;
-  gap: 1px;
-  padding-block: 1px;
-  background:
-    radial-gradient(
-      380px circle at var(--x, 50%) var(--y, 50%),
-      rgb(90 200 250 / calc(var(--glow) * 0.7)),
-      transparent
-    ),
-    var(--line);
-  transition: --glow 500ms;
-}
-
-.lit-grid:hover {
-  --glow: 1;
-}
-
-.lit-grid > * {
-  background-color: var(--bg);
-  transition: background-color 300ms;
-}
-
-.lit-grid > *:hover {
-  background-color: color-mix(in srgb, var(--bg), white 2%);
-}
-
-/* Stacked grids share one rule instead of doubling it. */
-.lit-grid + .lit-grid {
-  margin-top: -1px;
+.rise {
+  animation: rise 800ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 100ms);
 }
 
 @keyframes blink {
@@ -141,62 +207,66 @@
     opacity: 0;
   }
 }
-
 .caret {
   animation: blink 1s steps(1) infinite;
 }
 
-@keyframes row-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-
-.row-in {
-  animation: row-in 220ms ease-out both;
-}
-
-/* Endless scroll for the "huge folder" demo: content is duplicated, so -50% loops seamlessly. */
+/* Endless scroll for the huge-folder fragment: content is duplicated, so -50% loops seamlessly. */
 @keyframes scroll-list {
   to {
     transform: translateY(-50%);
   }
 }
-
 .scroll-list {
-  animation: scroll-list 9s linear infinite;
+  animation: scroll-list 14s linear infinite;
 }
 
-@keyframes rise {
+/* The preview photograph drifts slowly, like light changing. */
+@keyframes drift {
   from {
-    opacity: 0;
-    transform: translateY(16px);
+    transform: scale(1.04) translateX(0);
+  }
+  to {
+    transform: scale(1.12) translateX(-3%);
   }
 }
-
-.rise {
-  animation: rise 800ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.drift {
+  animation: drift 18s ease-in-out infinite alternate;
 }
 
-/* Hero window leans back in perspective and stands up as you scroll; --tilt (0 → 1) comes from useTiltOnScroll.
-   Hinged at the top edge so it still peeks above the fold while tilted. */
-.tilt-in {
-  transform-origin: 50% 0%;
-  transform: perspective(1200px) rotateX(calc((1 - var(--tilt, 1)) * 42deg))
-    scale(calc(0.9 + var(--tilt, 1) * 0.1));
-  filter: brightness(calc(0.6 + var(--tilt, 1) * 0.4));
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.crossfade {
+  animation: fade-in 700ms ease both;
+}
+
+/* Footer mark: the three logo layers settle into place when the footer arrives. */
+.js [data-reveal] .logo-layer {
+  transition: transform 1100ms var(--ease-out);
+  transform: var(--from);
+}
+.js [data-reveal].is-in .logo-layer {
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  .logo-layer,
+  .js [data-reveal],
+  .js [data-reveal] .logo-layer {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .rise,
   .caret,
-  .row-in,
   .scroll-list,
-  .rise {
+  .drift,
+  .crossfade {
     animation: none;
   }
 }
